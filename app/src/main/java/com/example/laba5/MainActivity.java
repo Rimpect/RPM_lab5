@@ -7,7 +7,8 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ToggleButton;
-
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
@@ -30,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
         imageView = findViewById(R.id.imageView);
 
         // Инициализируем MediaPlayer с звуком, который будет воспроизводиться по окончании отсчета
-        mediaPlayer = MediaPlayer.create(this, R.raw.your_sound_file);
+        mediaPlayer = MediaPlayer.create(this, R.raw.alarm);
 
         toggleButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -61,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
                 editTextSeconds.setText(String.valueOf(secondsRemaining));
 
                 // Запускаем анимацию
-                imageView.setAnimation(AnimationUtils.loadAnimation(MainActivity.this, R.anim.your_animation));
+                imageView.setAnimation(AnimationUtils.loadAnimation(MainActivity.this, R.anim.circle));
             }
 
             @Override

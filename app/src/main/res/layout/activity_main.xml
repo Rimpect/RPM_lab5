@@ -39,7 +39,7 @@
         android:id="@+id/imageView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:srcCompat="@drawable/your_animation_drawable"
+        app:srcCompat="@anim/circle"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toEndOf="@id/toggleButton"
         app:layout_constraintEnd_toEndOf="parent" />
