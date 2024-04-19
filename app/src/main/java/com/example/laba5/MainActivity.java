@@ -1,23 +1,27 @@
 package com.example.laba5;
-
-import android.media.MediaPlayer;
-import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.ToggleButton;
+import android.widget.TextView;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import androidx.appcompat.app.AppCompatActivity;
-
+import android.media.MediaPlayer;
+import java.util.Locale;
+import android.text.InputFilter;
+import android.text.Spanned;
 public class MainActivity extends AppCompatActivity {
 
-    private ToggleButton toggleButton;
-    private EditText editTextMinutes;
-    private EditText editTextSeconds;
-    private ImageView imageView;
+    private TextView timerTextView;
+    private Button toggleButton;
+    private Button resetButton;
+    private EditText inputMinutes;
+    private EditText inputSeconds;
     private CountDownTimer countDownTimer;
+    private long timeLeftInMillis;
+    private boolean timerRunning;
     private MediaPlayer mediaPlayer;
 
     @Override
@@ -25,71 +29,102 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        timerTextView = findViewById(R.id.timerTextView);
         toggleButton = findViewById(R.id.toggleButton);
-        editTextMinutes = findViewById(R.id.editTextMinutes);
-        editTextSeconds = findViewById(R.id.editTextSeconds);
-        imageView = findViewById(R.id.imageView);
-
-        // Инициализируем MediaPlayer с звуком, который будет воспроизводиться по окончании отсчета
-        mediaPlayer = MediaPlayer.create(this, R.raw.alarm);
+        resetButton = findViewById(R.id.resetButton);
+        inputMinutes = findViewById(R.id.inputMinutes);
+        inputSeconds = findViewById(R.id.inputSeconds);
 
         toggleButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (toggleButton.isChecked()) {
-                    startTimer();
-                } else {
+                if (timerRunning) {
                     stopTimer();
+                } else {
+                    startTimer();
                 }
+            }
+        });
+
+        resetButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                resetTimer();
             }
         });
     }
 
     private void startTimer() {
-        int minutes = Integer.parseInt(editTextMinutes.getText().toString());
-        int seconds = Integer.parseInt(editTextSeconds.getText().toString());
-        long totalTime = (minutes * 60 + seconds) * 1000; // В миллисекундах
+        String minutesText = inputMinutes.getText().toString();
+        String secondsText = inputSeconds.getText().toString();
+        inputMinutes.setFilters(new InputFilter[]{filter});
+        inputSeconds.setFilters(new InputFilter[]{filter});
+        if (minutesText.isEmpty() || secondsText.isEmpty()) {
+            return;
+        }
 
-        countDownTimer = new CountDownTimer(totalTime, 1000) {
+        int minutes = Integer.parseInt(minutesText);
+        int seconds = Integer.parseInt(secondsText);
+
+        timeLeftInMillis = (minutes * 60 + seconds) * 1000;
+
+        countDownTimer = new CountDownTimer(timeLeftInMillis, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
-                long secondsRemaining = millisUntilFinished / 1000;
-                long minutes = secondsRemaining / 60;
-                secondsRemaining %= 60;
-
-                // Обновляем текст в EditText
-                editTextMinutes.setText(String.valueOf(minutes));
-                editTextSeconds.setText(String.valueOf(secondsRemaining));
-
-                // Запускаем анимацию
-                imageView.setAnimation(AnimationUtils.loadAnimation(MainActivity.this, R.anim.circle));
+                timeLeftInMillis = millisUntilFinished;
+                Animation scaleUp = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.scale_up);
+                timerTextView.startAnimation(scaleUp);
+                updateCountDownText();
             }
 
             @Override
             public void onFinish() {
-                // Останавливаем таймер
-                toggleButton.setChecked(false);
-
-                // Воспроизводим звук
+                timerRunning = false;
+                toggleButton.setText("Start");
+                timeLeftInMillis = 0;
+                updateCountDownText();
+                mediaPlayer = MediaPlayer.create(MainActivity.this, R.raw.alarm);
+                mediaPlayer.setLooping(false);
                 mediaPlayer.start();
             }
-        };
+        }.start();
 
-        countDownTimer.start();
+        timerRunning = true;
+        toggleButton.setText("Pause");
+
     }
 
     private void stopTimer() {
-        if (countDownTimer != null) {
-            countDownTimer.cancel();
-        }
+        countDownTimer.cancel();
+        timerRunning = false;
+        toggleButton.setText("Start");
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (mediaPlayer != null) {
-            mediaPlayer.release();
-            mediaPlayer = null;
+    private void resetTimer() {
+        timeLeftInMillis = 0;
+        updateCountDownText();
+        if (timerRunning) {
+            stopTimer();
+            startTimer();
         }
     }
+    InputFilter filter = new InputFilter() {
+        public CharSequence filter(CharSequence source, int start, int end, Spanned dest, int dstart, int dend) {
+            for (int i = start; i < end; i++) {
+                if (!Character.isLetterOrDigit(source.charAt(i))) {
+                    return "";
+                }
+            }
+            return null; // Оставляем ввод без изменений
+        }
+    };
+
+    private void updateCountDownText() {
+        int minutes = (int) (timeLeftInMillis / 1000) / 60;
+        int seconds = (int) (timeLeftInMillis / 1000) % 60;
+
+        String timeFormatted = String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds);
+        timerTextView.setText(timeFormatted);
+    }
+
 }
